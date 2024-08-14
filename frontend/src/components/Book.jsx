@@ -5,14 +5,9 @@ import Rating from './Rating';
 const Book = ({ book }) => {
   return (
     <Card className='my-3 p-3 rounded'>
-      <Link to={`/book/${book._id}`}>
-
-      
+      <Link to={`/book/${book._id}`}> 
         <Card.Img src={book.image} variant='top' />
       </Link>
-
-
-
       <Card.Body>
         <Link to={`/book/${book._id}`}>
           <Card.Title as='div' className = 'book-title'>

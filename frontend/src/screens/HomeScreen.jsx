@@ -1,31 +1,34 @@
-import { useState, useEffect } from 'react';
 import { Row, Col } from 'react-bootstrap';
-import axios from 'axios';
+import { useGetBooksQuery } from '../slices/bookSlice';
 import Book from '../components/Book';
+import Loader from '../components/Loader';
+import Message from '../components/Message';
 
 const HomeScreen = () => {
-    const [books, setBooks] = useState([]);
-
-    useEffect(() => {
-      const fetchBooks = async () => {
-        const { data } = await axios.get('/api/books');
-        setBooks(data);
-      };
-
-      fetchBooks();
-    }, []);
+  const { data: books, isLoading, error } = useGetBooksQuery();
+  console.log(books)
+  
   return (
     <>
-      <h1>Latest Books</h1>
-      <Row>
-        {books.map((book) => (
-          <Col key={book._id} sm={12} md={6} lg={4} xl={3}>
-            <Book book={book} />
-          </Col>
-        ))}
-      </Row>
+      {isLoading ? (
+        <Loader />
+      ) : error ? (
+        <Message variant='danger'>
+          {error?.data?.message || error.error}
+        </Message>
+      ) : (
+        <>
+          <h1>Latest Books</h1>
+          <Row>
+            {books.map((book) => (
+              <Col key={book._id} sm={12} md={6} lg={4} xl={3}>
+                <Book book={book} />
+              </Col>
+            ))}
+          </Row>
+        </>
+      )}
     </>
   );
 };
-
 export default HomeScreen;

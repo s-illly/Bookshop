@@ -1,39 +1,47 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate} from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { Row, Col, Image, ListGroup, Card, Button } from 'react-bootstrap';
+import { Row, Col, Image, ListGroup, Card, Button,Form } from 'react-bootstrap';
 import Rating from '../components/Rating';
-
-import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../slices/cartSlice';
+import { useGetBookDetailsQuery } from '../slices/bookSlice';
 
 const BookScreen = () => {
     const { id: bookId } = useParams();
 
-    const [book, setBook] = useState({});
+    const {
+      data: book,
+      isLoading,
+      error,
+    } = useGetBookDetailsQuery(bookId);
 
-    useEffect(() => {
-      const fetchBook = async () => {
-        const { data } = await axios.get(`/api/books/${bookId}`);
-        setBook(data);
-      };
-  
-      fetchBook();
-    }, [bookId]);
+    const [qty, setQty] = useState(1);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    
-    return (
-        <>
+    const addToCartHandler = () => {
+      dispatch(addToCart({ ...book, qty }));
+      navigate('/cart');
+    };
+
+  return (
+    <>
         <Link to='/' className='btn btn-light my-3'>
         Go Back
       </Link>
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>{error?.data.message || error.error}</div>
+      ) : (
+        <>
         <Row>
-        <Col md = {5}>
+        <Col md={5}>
         <Image src={book.image} alt={book.name} fluid />
         </Col>
-
-        <Col md = {4}>
-          <ListGroup variant='flush'>
+        <Col md={4}>
+        <ListGroup variant='flush'>
             <ListGroup.Item>
               <h3>{book.name}</h3>
             </ListGroup.Item>
@@ -45,13 +53,13 @@ const BookScreen = () => {
             </ListGroup.Item>
             <ListGroup.Item>Price: ${book.price}</ListGroup.Item>
             <ListGroup.Item>Description: {book.description}</ListGroup.Item>
-          </ListGroup>
-        </Col>
+        </ListGroup>
 
-        <Col md = {3}>
+        </Col>
+        <Col md={3}>
         <Card>
-            <ListGroup variant='flush'>
-              <ListGroup.Item>
+        <ListGroup variant='flush'>
+        <ListGroup.Item>
                 <Row>
                   <Col>Price:</Col>
                   <Col>
@@ -59,7 +67,6 @@ const BookScreen = () => {
                   </Col>
                 </Row>
               </ListGroup.Item>
-
               <ListGroup.Item>
                 <Row>
                   <Col>Status:</Col>
@@ -69,24 +76,48 @@ const BookScreen = () => {
                 </Row>
               </ListGroup.Item>
 
+                  {/* Qty Select */}
+                  {book.countInStock > 0 && (
+                    <ListGroup.Item>
+                      <Row>
+                        <Col>Qty</Col>
+                        <Col>
+                          <Form.Control
+                            as='select'
+                            value={qty}
+                            onChange={(e) => setQty(Number(e.target.value))}
+                          >
+                            {[...Array(book.countInStock).keys()].map(
+                              (x) => (
+                                <option key={x + 1} value={x + 1}>
+                                  {x + 1}
+                                </option>
+                              )
+                            )}
+                          </Form.Control>
+                        </Col>
+                      </Row>
+                    </ListGroup.Item>
+                  )}
+
               <ListGroup.Item>
                 <Button
                   className='btn-block'
                   type='button'
                   disabled={book.countInStock === 0}
+                  onClick={addToCartHandler}
                 >
                   Add To Cart
                 </Button>
               </ListGroup.Item>
-            </ListGroup>
-          </Card>
-        
+        </ListGroup>
+        </Card>
         </Col>
-        
-
-        </Row>
-        </>
-    )
+      </Row>
+      </>
+      ) }
+    </>
+  )
 }
 
 export default BookScreen
