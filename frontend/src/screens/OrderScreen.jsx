@@ -1,23 +1,26 @@
-import { Link, useParams } from 'react-router-dom';
-import { Row, Col, ListGroup, Image, Card } from 'react-bootstrap';
-import Message from '../components/Message';
-import Loader from '../components/Loader';
-import { useGetOrderDetailsQuery } from '../slices/orderApiSlice';
 import { useEffect } from 'react';
-import { Row, Col, ListGroup, Image, Card, Button } from 'react-bootstrap';
-import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { Link, useParams } from 'react-router-dom';
+import { Row, Col, ListGroup, Image, Card,Button } from 'react-bootstrap';
+import Message from '../components/Message';
+import Loader from '../components/Loader';
 import {
     useGetOrderDetailsQuery,
     usePayOrderMutation,
     useGetPaypalClientIdQuery,
   } from '../slices/orderApiSlice';
 
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
+
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
 
+  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+  const { userInfo } = useSelector((state) => state.auth);
+
+  const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
   const {
     data: order,
     refetch,
@@ -25,17 +28,12 @@ const OrderScreen = () => {
     error,
   } = useGetOrderDetailsQuery(orderId);
 
-  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
-
-  const { userInfo } = useSelector((state) => state.auth);
-
-  const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
-
   const {
     data: paypal,
     isLoading: loadingPayPal,
     error: errorPayPal,
   } = useGetPaypalClientIdQuery();
+
 
   useEffect(() => {
     if (!errorPayPal && !loadingPayPal && paypal.clientId) {
@@ -68,6 +66,25 @@ const OrderScreen = () => {
       }
     });
   }
+
+  function onError(err) {
+    toast.error(err.message);
+  }
+
+  function createOrder(data, actions) {
+    return actions.order
+      .create({
+        purchase_units: [
+          {
+            amount: { value: order.totalPrice },
+          },
+        ],
+      })
+      .then((orderID) => {
+        return orderID;
+      });
+  }
+
 
   async function onApproveTest() {
     await payOrder({ orderId, details: { payer: {} } });
@@ -206,6 +223,7 @@ const OrderScreen = () => {
                 </Row>
               </ListGroup.Item>
               {/* PAY ORDER PLACEHOLDER */}
+
               {!order.isPaid && (
                 <ListGroup.Item>
                   {loadingPay && <Loader />}
@@ -232,6 +250,8 @@ const OrderScreen = () => {
                   )}
                 </ListGroup.Item>
               )}
+
+
 
               {/* {MARK AS DELIVERED PLACEHOLDER} */}
             </ListGroup>
