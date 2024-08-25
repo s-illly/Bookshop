@@ -5,10 +5,15 @@ import Message from '../components/Message';
 import Loader from '../components/Loader';
 import { useGetBooksQuery,useAddBookMutation,useDeleteBookMutation } from '../slices/bookApiSlice';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
+import Paginate from '../components/Paginate';
 
 const BookListScreen = () => {
-  const { data: books, isLoading, error, refetch } = useGetBooksQuery();
-  const [deleteBook, { isLoading: loadingDelete }] = useDeleteBookMutation();
+  const { pageNumber } = useParams();
+  const { data, isLoading, error, refetch } = useGetBooksQuery({
+    pageNumber,
+  })
+  ;const [deleteBook, { isLoading: loadingDelete }] = useDeleteBookMutation();
 
  const deleteHandler = async (id) => {
     if (window.confirm('Are you sure')) {
@@ -65,7 +70,7 @@ const BookListScreen = () => {
               </tr>
             </thead>
             <tbody>
-              {books.map((book) => (
+              {data.books.map((book) => (
                 <tr key={book._id}>
                   <td>{book._id}</td>
                   <td>{book.name}</td>
@@ -91,6 +96,7 @@ const BookListScreen = () => {
             </tbody>
           </Table>
           {/* PAGINATE PLACEHOLDER */}
+          <Paginate pages={data.pages} page={data.page} isAdmin={true} />
         </>
       )}
     </>

@@ -5,8 +5,25 @@ import Book from '../models/bookModel.js';
 // @route   GET /api/books
 // @access  Public
 const getBooks = asyncHandler(async (req, res) =>{
-    const books = await Book.find({});
-    res.json(books)
+  const pageSize = 2;
+  const page = Number(req.query.pageNumber) || 1;
+  const keyword = req.query.keyword
+    ? {
+        name: {
+          $regex: req.query.keyword,
+          $options: 'i',
+        },
+      }
+    : {};  
+    // $options : 'i' case insesitive 
+
+    const count = await Book.countDocuments({...keyword});
+    const books = await Book.find({ ...keyword })
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+  res.json({ books, page, pages: Math.ceil(count / pageSize) 
+
+  });
 })
 
 
@@ -122,4 +139,13 @@ const createBookReview = asyncHandler(async (req, res) => {
   }
 });
 
-export { getBooks, getBookById,addBook, updateBook, deleteBook,createBookReview };
+// @desc    Get top rated books
+// @route   GET /api/books/top
+// @access  Public
+const getTopBooks = asyncHandler(async (req, res) => {
+  const books = await Book.find({}).sort({ rating: -1 }).limit(3);
+
+  res.json(books);
+});
+
+export { getBooks, getBookById,addBook, updateBook, deleteBook,createBookReview,getTopBooks };

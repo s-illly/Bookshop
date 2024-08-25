@@ -4,8 +4,9 @@ import { apiSlice } from './apiSlice';
 export const bookSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getBooks: builder.query({
-      query: () => ({
+      query: ({keyword, pageNumber }) => ({
         url: BOOKS_URL,
+        params: { keyword,pageNumber },
       }),
       providesTags: ['Book'],
       keepUnusedDataFor: 5,
@@ -57,10 +58,16 @@ export const bookSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Book'],
     }),
+    getTopBooks: builder.query({
+      query: () => ({
+        url: `${BOOKS_URL}/top`,
+      }),
+      keepUnusedDataFor: 5,
+    }),
     
   }),
 });
 
 export const { useGetBooksQuery, useGetBookDetailsQuery,useAddBookMutation,
   useUpdateBookMutation,useUploadBookImageMutation,
-  useDeleteBookMutation, useCreateReviewMutation } = bookSlice;
+  useDeleteBookMutation, useCreateReviewMutation, useGetTopBooksQuery } = bookSlice;
